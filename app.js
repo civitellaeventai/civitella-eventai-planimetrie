@@ -72,10 +72,10 @@ function addArea(label, color, stroke, dashed = false) {
   updateLegend();
 
   const rect = new Konva.Rect({
-    x: stage.width() / 2 - 80,
-    y: stage.height() / 2 - 50,
-    width: 160,
-    height: 90,
+    x: stage.width() / 2 - 90,
+    y: stage.height() / 2 - 55,
+    width: 180,
+    height: 100,
     fill: color,
     stroke: stroke,
     strokeWidth: 3,
@@ -101,15 +101,25 @@ function addEstintore() {
   });
 
   g.add(new Konva.Rect({
-    x: -13, y: -20, width: 26, height: 40,
-    fill: "#e63946", stroke: "#990000", strokeWidth: 2, cornerRadius: 4
+    x: -13,
+    y: -20,
+    width: 26,
+    height: 40,
+    fill: "#e63946",
+    stroke: "#990000",
+    strokeWidth: 2,
+    cornerRadius: 4
   }));
 
   g.add(new Konva.Text({
     text: "E",
-    x: -10, y: -12, width: 20,
-    align: "center", fill: "white",
-    fontSize: 22, fontStyle: "bold"
+    x: -10,
+    y: -12,
+    width: 20,
+    align: "center",
+    fill: "white",
+    fontSize: 22,
+    fontStyle: "bold"
   }));
 
   g.on("click tap", () => selectNode(g));
@@ -129,15 +139,59 @@ function addSoccorso() {
   });
 
   g.add(new Konva.Rect({
-    x: -22, y: -22, width: 44, height: 44,
-    fill: "#1f9d55", cornerRadius: 5
+    x: -22,
+    y: -22,
+    width: 44,
+    height: 44,
+    fill: "#1f9d55",
+    cornerRadius: 5
   }));
 
   g.add(new Konva.Text({
     text: "+",
-    x: -20, y: -22, width: 40,
-    align: "center", fill: "white",
-    fontSize: 40, fontStyle: "bold"
+    x: -20,
+    y: -22,
+    width: 40,
+    align: "center",
+    fill: "white",
+    fontSize: 40,
+    fontStyle: "bold"
+  }));
+
+  g.on("click tap", () => selectNode(g));
+  layer.add(g);
+  selectNode(g);
+}
+
+function addWC() {
+  counts["WC"] = (counts["WC"] || 0) + 1;
+  updateLegend();
+
+  const g = new Konva.Group({
+    x: stage.width() / 2,
+    y: stage.height() / 2,
+    draggable: true,
+    name: "WC"
+  });
+
+  g.add(new Konva.Circle({
+    x: 0,
+    y: 0,
+    radius: 25,
+    fill: "#3a86ff",
+    stroke: "#0b4f9c",
+    strokeWidth: 2
+  }));
+
+  g.add(new Konva.Text({
+    text: "WC",
+    x: -24,
+    y: -10,
+    width: 48,
+    align: "center",
+    fill: "white",
+    fontSize: 18,
+    fontStyle: "bold"
   }));
 
   g.on("click tap", () => selectNode(g));
@@ -194,6 +248,9 @@ function addViaFuga() {
 document.getElementById("gazeboBtn").onclick = () =>
   addArea("Gazebo / Somministrazione", "rgba(128,0,255,0.20)", "#7b2cbf");
 
+document.getElementById("palcoBtn").onclick = () =>
+  addArea("Palco", "rgba(69,123,157,0.22)", "#457b9d");
+
 document.getElementById("tavoliBtn").onclick = () =>
   addArea("Tavoli / Area consumo", "rgba(120,72,0,0.20)", "#7f5539", true);
 
@@ -202,6 +259,7 @@ document.getElementById("pubblicoBtn").onclick = () =>
 
 document.getElementById("estintoreBtn").onclick = addEstintore;
 document.getElementById("soccorsoBtn").onclick = addSoccorso;
+document.getElementById("wcBtn").onclick = addWC;
 document.getElementById("accessoBtn").onclick = addAccesso;
 document.getElementById("arrowBtn").onclick = addViaFuga;
 
@@ -217,6 +275,7 @@ document.getElementById("upload").addEventListener("change", e => {
   if (!file) return;
 
   placeTitle.textContent = "ORTOFOTO PERSONALIZZATA";
+
   const reader = new FileReader();
   reader.onload = ev => loadImage(ev.target.result);
   reader.readAsDataURL(file);
@@ -277,7 +336,9 @@ document.getElementById("closePoly").addEventListener("click", () => {
 
   layer.add(poly);
 
-  counts["Perimetro manifestazione"] = (counts["Perimetro manifestazione"] || 0) + 1;
+  counts["Perimetro manifestazione"] =
+    (counts["Perimetro manifestazione"] || 0) + 1;
+
   updateLegend();
 
   polygonMode = false;
@@ -291,6 +352,7 @@ function showVertices(poly) {
   hideVertices();
 
   const pts = poly.points();
+
   for (let i = 0; i < pts.length; i += 2) {
     const h = new Konva.Circle({
       x: pts[i] + poly.x(),
@@ -358,6 +420,7 @@ document.getElementById("deleteBtn").addEventListener("click", () => {
   if (!selected) return;
 
   const name = selected.name();
+
   if (counts[name]) {
     counts[name]--;
     updateLegend();
@@ -401,12 +464,14 @@ document.getElementById("pdfBtn").addEventListener("click", async () => {
   pdf.text(placeTitle.textContent, 148, 24, { align: "center" });
 
   const img = stage.toDataURL({ pixelRatio: 2 });
+
   pdf.addImage(img, "PNG", 10, 32, 205, 145);
 
   pdf.setFontSize(12);
   pdf.text("LEGENDA", 225, 36);
 
   let y = 46;
+
   Object.keys(counts).forEach(k => {
     if (counts[k] > 0) {
       pdf.setFont("helvetica", "normal");
@@ -417,8 +482,8 @@ document.getElementById("pdfBtn").addEventListener("click", async () => {
 
   pdf.setFont("helvetica", "bold");
   pdf.text("NOTE", 225, 125);
-  pdf.setFont("helvetica", "normal");
 
+  pdf.setFont("helvetica", "normal");
   const note = document.getElementById("notes").value || "";
   pdf.text(pdf.splitTextToSize(note, 60), 225, 134);
 
