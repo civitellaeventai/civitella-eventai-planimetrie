@@ -16,9 +16,7 @@ body{
   height:100vh;
 }
 
-/* ==================================
-   TOOLBAR SINISTRA
-================================== */
+/* TOOLBAR SINISTRA */
 
 #toolbar{
   width:320px;
@@ -94,9 +92,7 @@ body{
   font-weight:bold;
 }
 
-/* ==================================
-   MAPPA CENTRALE
-================================== */
+/* AREA CENTRALE */
 
 #map-area{
   flex:1;
@@ -136,9 +132,7 @@ body{
   height:100%;
 }
 
-/* ==================================
-   LEGENDA
-================================== */
+/* LEGENDA */
 
 #legend-panel{
   width:340px;
@@ -177,9 +171,7 @@ body{
   flex-shrink:0;
 }
 
-/* ==================================
-   SIMBOLOGIA PROFESSIONALE
-================================== */
+/* SIMBOLOGIA */
 
 .perimeter-symbol{
   border:3px dashed red;
@@ -207,6 +199,11 @@ body{
   border:3px solid #7b2cbf;
 }
 
+.palco-symbol{
+  background:rgba(69,123,157,.22);
+  border:3px solid #457b9d;
+}
+
 .tables-symbol{
   background:rgba(120,72,0,.18);
   border:3px dashed #7f5539;
@@ -224,9 +221,15 @@ body{
   border-radius:4px;
 }
 
-/* ==================================
-   ELEMENTI INSERITI
-================================== */
+.wc-symbol{
+  background:#3a86ff;
+  color:white;
+  font-weight:bold;
+  font-size:14px;
+  border-radius:50%;
+}
+
+/* ELEMENTI INSERITI */
 
 #legendList{
   border:1px solid #ddd;
@@ -244,9 +247,7 @@ body{
   padding:6px 0;
 }
 
-/* ==================================
-   NOTE
-================================== */
+/* NOTE */
 
 #notes{
   width:100%;
@@ -258,21 +259,16 @@ body{
   font-family:Arial;
 }
 
-/* ==================================
-   CANVAS
-================================== */
+/* CANVAS */
 
 .konvajs-content{
   background:white;
   box-shadow:0 0 12px rgba(0,0,0,.15);
 }
 
-/* ==================================
-   RESPONSIVE
-================================== */
+/* RESPONSIVE */
 
 @media(max-width:1500px){
-
   #toolbar{
     width:290px;
   }
@@ -280,5 +276,4 @@ body{
   #legend-panel{
     width:290px;
   }
-
 }
