@@ -8,16 +8,21 @@ const layer = new Konva.Layer();
 stage.add(layer);
 
 // ZOOM + PAN
+let panMode = false;
+let lastPanPos = null;
+
 window.addEventListener("keydown", e => {
   if (e.code === "Space") {
-    stage.draggable(true);
+    panMode = true;
     document.body.style.cursor = "grab";
+    e.preventDefault();
   }
 });
 
 window.addEventListener("keyup", e => {
   if (e.code === "Space") {
-    stage.draggable(false);
+    panMode = false;
+    lastPanPos = null;
     document.body.style.cursor = "default";
   }
 });
@@ -25,7 +30,7 @@ window.addEventListener("keyup", e => {
 stage.on("wheel", e => {
   e.evt.preventDefault();
 
-  const scaleBy = 1.08;
+  const scaleBy = 1.025;
   const oldScale = stage.scaleX();
   const pointer = stage.getPointerPosition();
 
@@ -35,7 +40,9 @@ stage.on("wheel", e => {
   };
 
   const direction = e.evt.deltaY > 0 ? -1 : 1;
-  const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+  let newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+  newScale = Math.max(0.4, Math.min(4, newScale));
 
   stage.scale({ x: newScale, y: newScale });
 
@@ -46,6 +53,43 @@ stage.on("wheel", e => {
 
   stage.batchDraw();
 });
+
+stage.on("mousedown touchstart", () => {
+  if (!panMode) return;
+  lastPanPos = stage.getPointerPosition();
+  document.body.style.cursor = "grabbing";
+});
+
+stage.on("mousemove touchmove", () => {
+  if (!panMode || !lastPanPos) return;
+
+  const pos = stage.getPointerPosition();
+  if (!pos) return;
+
+  const dx = pos.x - lastPanPos.x;
+  const dy = pos.y - lastPanPos.y;
+
+  stage.x(stage.x() + dx);
+  stage.y(stage.y() + dy);
+
+  lastPanPos = pos;
+  stage.batchDraw();
+});
+
+stage.on("mouseup touchend mouseleave", () => {
+  lastPanPos = null;
+  if (panMode) document.body.style.cursor = "grab";
+});
+
+function getStagePointer() {
+  const pointer = stage.getPointerPosition();
+  if (!pointer) return null;
+
+  const transform = stage.getAbsoluteTransform().copy();
+  transform.invert();
+
+  return transform.point(pointer);
+}
 
 let bg = null;
 let selected = null;
@@ -85,6 +129,7 @@ function updateLegend() {
 
 function loadImage(src) {
   const img = new Image();
+
   img.onload = () => {
     if (bg) bg.destroy();
 
@@ -105,6 +150,7 @@ function loadImage(src) {
     bg.moveToBottom();
     layer.draw();
   };
+
   img.src = src;
 }
 
@@ -119,9 +165,14 @@ function addArea(label, color, stroke, dashed = false) {
   counts[label] = (counts[label] || 0) + 1;
   updateLegend();
 
+  const center = getStagePointer() || {
+    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
+    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
+  };
+
   const rect = new Konva.Rect({
-    x: stage.width() / 2 - 90,
-    y: stage.height() / 2 - 55,
+    x: center.x - 90,
+    y: center.y - 55,
     width: 180,
     height: 100,
     fill: color,
@@ -142,9 +193,14 @@ function addEstintore() {
   counts["Estintore"] = (counts["Estintore"] || 0) + 1;
   updateLegend();
 
+  const center = getStagePointer() || {
+    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
+    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
+  };
+
   const g = new Konva.Group({
-    x: stage.width() / 2,
-    y: stage.height() / 2,
+    x: center.x,
+    y: center.y,
     draggable: true,
     name: "Estintore",
     ...outline
@@ -181,9 +237,14 @@ function addSoccorso() {
   counts["Punto primo soccorso"] = (counts["Punto primo soccorso"] || 0) + 1;
   updateLegend();
 
+  const center = getStagePointer() || {
+    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
+    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
+  };
+
   const g = new Konva.Group({
-    x: stage.width() / 2,
-    y: stage.height() / 2,
+    x: center.x,
+    y: center.y,
     draggable: true,
     name: "Punto primo soccorso",
     ...outline
@@ -218,9 +279,14 @@ function addWC() {
   counts["WC"] = (counts["WC"] || 0) + 1;
   updateLegend();
 
+  const center = getStagePointer() || {
+    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
+    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
+  };
+
   const g = new Konva.Group({
-    x: stage.width() / 2,
-    y: stage.height() / 2,
+    x: center.x,
+    y: center.y,
     draggable: true,
     name: "WC",
     ...outline
@@ -255,9 +321,14 @@ function addAccesso() {
   counts["Accessi principali"] = (counts["Accessi principali"] || 0) + 1;
   updateLegend();
 
+  const center = getStagePointer() || {
+    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
+    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
+  };
+
   const arrow = new Konva.Arrow({
-    x: stage.width() / 2 - 70,
-    y: stage.height() / 2,
+    x: center.x - 70,
+    y: center.y,
     points: [0, 0, 140, 0],
     pointerLength: 16,
     pointerWidth: 16,
@@ -279,9 +350,14 @@ function addViaFuga() {
   counts["Vie di fuga"] = (counts["Vie di fuga"] || 0) + 1;
   updateLegend();
 
+  const center = getStagePointer() || {
+    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
+    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
+  };
+
   const arrow = new Konva.Arrow({
-    x: stage.width() / 2 - 80,
-    y: stage.height() / 2,
+    x: center.x - 80,
+    y: center.y,
     points: [0, 0, 170, 0],
     pointerLength: 20,
     pointerWidth: 20,
@@ -321,6 +397,7 @@ luogoSelect.addEventListener("change", () => {
   const option = luogoSelect.options[luogoSelect.selectedIndex];
   placeTitle.textContent = option.dataset.title;
   clearObjects();
+  resetView();
   loadImage(luogoSelect.value);
 });
 
@@ -331,7 +408,11 @@ document.getElementById("upload").addEventListener("change", e => {
   placeTitle.textContent = "ORTOFOTO PERSONALIZZATA";
 
   const reader = new FileReader();
-  reader.onload = ev => loadImage(ev.target.result);
+  reader.onload = ev => {
+    clearObjects();
+    resetView();
+    loadImage(ev.target.result);
+  };
   reader.readAsDataURL(file);
 });
 
@@ -355,7 +436,9 @@ document.getElementById("polyBtn").addEventListener("click", () => {
 
 stage.on("click tap", e => {
   if (polygonMode) {
-    const p = stage.getPointerPosition();
+    const p = getStagePointer();
+    if (!p) return;
+
     polygonPoints.push(p.x, p.y);
     tempLine.points(polygonPoints);
     layer.draw();
@@ -454,9 +537,14 @@ document.getElementById("textBtn").addEventListener("click", () => {
   const boxWidth = text.width();
   const boxHeight = text.height();
 
+  const center = getStagePointer() || {
+    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
+    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
+  };
+
   const group = new Konva.Group({
-    x: stage.width() / 2 - boxWidth / 2,
-    y: stage.height() / 2 - boxHeight / 2,
+    x: center.x - boxWidth / 2,
+    y: center.y - boxHeight / 2,
     draggable: true,
     name: "Testo",
     ...outline
@@ -510,6 +598,12 @@ function clearObjects() {
   layer.draw();
 }
 
+function resetView() {
+  stage.position({ x: 0, y: 0 });
+  stage.scale({ x: 1, y: 1 });
+  stage.batchDraw();
+}
+
 document.getElementById("clearBtn").addEventListener("click", clearObjects);
 
 document.getElementById("pdfBtn").addEventListener("click", async () => {
@@ -532,12 +626,12 @@ document.getElementById("pdfBtn").addEventListener("click", async () => {
 
   pdf.setDrawColor(30, 30, 30);
   pdf.setLineWidth(0.4);
-
   pdf.rect(10, 30, 205, 145);
 
   const oldX = stage.x();
   const oldY = stage.y();
-  const oldScale = stage.scaleX();
+  const oldScaleX = stage.scaleX();
+  const oldScaleY = stage.scaleY();
 
   stage.position({ x: 0, y: 0 });
   stage.scale({ x: 1, y: 1 });
@@ -546,7 +640,7 @@ document.getElementById("pdfBtn").addEventListener("click", async () => {
   const img = stage.toDataURL({ pixelRatio: 2 });
 
   stage.position({ x: oldX, y: oldY });
-  stage.scale({ x: oldScale, y: oldScale });
+  stage.scale({ x: oldScaleX, y: oldScaleY });
   stage.batchDraw();
 
   pdf.addImage(img, "PNG", 11, 31, 203, 143);
