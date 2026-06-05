@@ -8,15 +8,15 @@
 <style>
 body { margin:0; font-family:Arial, sans-serif; background:#f5f5f5; }
 #toolbar {
-  width:280px; height:100vh; background:#fff; border-right:1px solid #ccc;
+  width:285px; height:100vh; background:#fff; border-right:1px solid #ccc;
   float:left; padding:14px; box-sizing:border-box; overflow:auto;
 }
-#container { margin-left:280px; background:#ddd; height:100vh; }
+#container { margin-left:285px; background:#d9d9d9; height:100vh; }
 button, select, input {
   width:100%; padding:9px; margin-bottom:8px; box-sizing:border-box;
 }
 button { cursor:pointer; }
-.small { font-size:12px; color:#555; }
+.small { font-size:12px; color:#555; line-height:1.35; }
 .active { background:#ffe8e8; border:2px solid #d00; }
 </style>
 </head>
@@ -38,11 +38,11 @@ button { cursor:pointer; }
 
   <hr>
 
-  <button onclick="addSymbol('GAZEBO','G','#f4a261')">+ Gazebo</button>
-  <button onclick="addSymbol('PALCO','P','#457b9d')">+ Palco</button>
-  <button onclick="addSymbol('TAVOLI','T','#8d99ae')">+ Tavoli</button>
+  <button onclick="addSymbol('GAZEBO','▣','#f4a261')">+ Gazebo</button>
+  <button onclick="addSymbol('PALCO','▭','#457b9d')">+ Palco</button>
+  <button onclick="addSymbol('TAVOLI','⊞','#6c757d')">+ Tavoli</button>
   <button onclick="addSymbol('ESTINTORE','E','#e63946')">+ Estintore</button>
-  <button onclick="addSymbol('PRIMO SOCCORSO','+','#2a9d8f')">+ Primo Soccorso</button>
+  <button onclick="addSymbol('PRIMO SOCCORSO','✚','#2a9d8f')">+ Primo Soccorso</button>
   <button onclick="addSymbol('ACCESSO','A','#1d3557')">+ Accesso</button>
   <button onclick="addSymbol('SOMMINISTRAZIONE','S','#bc6c25')">+ Somministrazione</button>
   <button onclick="addSymbol('WC','WC','#3a86ff')">+ WC</button>
@@ -64,16 +64,16 @@ button { cursor:pointer; }
   <button onclick="exportPNG()">Esporta PNG</button>
 
   <p class="small">
-    Perimetro: clicca più punti sulla mappa, poi “Chiudi perimetro”.<br>
-    Oggetti: clicca e trascina.<br>
-    Seleziona un elemento per ridimensionarlo o ruotarlo.
+    <b>Perimetro:</b> clicca più punti sulla mappa, poi “Chiudi perimetro”.<br>
+    Dopo la chiusura puoi spostare i vertici rossi.<br><br>
+    <b>Oggetti:</b> clicca, trascina, ruota o ridimensiona.
   </p>
 </div>
 
 <div id="container"></div>
 
 <script>
-const sidebar = 280;
+const sidebar = 285;
 const width = window.innerWidth - sidebar;
 const height = window.innerHeight;
 
@@ -86,13 +86,13 @@ const stage = new Konva.Stage({
 const layer = new Konva.Layer();
 stage.add(layer);
 
-let backgroundImage;
+let backgroundImage = null;
 let selectedNode = null;
-
 let polygonMode = false;
 let polygonPoints = [];
 let tempLine = null;
 let tempCircles = [];
+let vertexHandles = [];
 
 const transformer = new Konva.Transformer({
   rotateEnabled: true,
@@ -105,12 +105,29 @@ function loadBase(src) {
   img.onload = function() {
     if (backgroundImage) backgroundImage.destroy();
 
+    const imgRatio = img.width / img.height;
+    const canvasRatio = width / height;
+
+    let drawWidth, drawHeight, offsetX, offsetY;
+
+    if (imgRatio > canvasRatio) {
+      drawWidth = width;
+      drawHeight = width / imgRatio;
+      offsetX = 0;
+      offsetY = (height - drawHeight) / 2;
+    } else {
+      drawHeight = height;
+      drawWidth = height * imgRatio;
+      offsetX = (width - drawWidth) / 2;
+      offsetY = 0;
+    }
+
     backgroundImage = new Konva.Image({
       image: img,
-      x: 0,
-      y: 0,
-      width: width,
-      height: height,
+      x: offsetX,
+      y: offsetY,
+      width: drawWidth,
+      height: drawHeight,
       listening: true
     });
 
@@ -128,46 +145,47 @@ function changeBase() {
 function selectNode(node) {
   selectedNode = node;
   transformer.nodes([node]);
+  hideVertexHandles();
   layer.draw();
 }
 
 function addSymbol(label, symbol, color) {
   const group = new Konva.Group({
-    x: width / 2 - 50,
+    x: width / 2 - 45,
     y: height / 2 - 35,
     draggable: true
   });
 
-  const rect = new Konva.Rect({
-    width: 100,
-    height: 60,
+  const circle = new Konva.Circle({
+    x: 45,
+    y: 28,
+    radius: 26,
     fill: 'white',
     stroke: color,
-    strokeWidth: 3,
-    cornerRadius: 5
+    strokeWidth: 4
   });
 
   const icon = new Konva.Text({
     text: symbol,
-    fontSize: 26,
+    fontSize: 24,
     fontStyle: 'bold',
     fill: color,
-    width: 100,
+    width: 90,
     align: 'center',
-    y: 6
+    y: 15
   });
 
   const text = new Konva.Text({
     text: label,
-    fontSize: 11,
+    fontSize: 10,
     fill: '#111',
-    width: 100,
+    width: 110,
     align: 'center',
-    y: 38
+    x: -10,
+    y: 58
   });
 
-  group.add(rect, icon, text);
-
+  group.add(circle, icon, text);
   group.on('click tap', () => selectNode(group));
 
   layer.add(group);
@@ -179,6 +197,7 @@ function startPolygon() {
   polygonPoints = [];
   tempCircles.forEach(c => c.destroy());
   tempCircles = [];
+  hideVertexHandles();
 
   if (tempLine) tempLine.destroy();
 
@@ -221,6 +240,7 @@ stage.on('click tap', function(e) {
   if (e.target === stage || e.target === backgroundImage) {
     transformer.nodes([]);
     selectedNode = null;
+    hideVertexHandles();
     layer.draw();
   }
 });
@@ -243,26 +263,77 @@ function finishPolygon() {
     strokeWidth: 3,
     dash: [10, 6],
     closed: true,
-    draggable: true
+    draggable: true,
+    name: 'polygon'
   });
 
-  polygon.on('click tap', () => selectNode(polygon));
+  polygon.on('click tap', () => {
+    selectedNode = polygon;
+    transformer.nodes([]);
+    showVertexHandles(polygon);
+    layer.draw();
+  });
+
+  polygon.on('dragmove', () => {
+    showVertexHandles(polygon);
+  });
 
   layer.add(polygon);
 
   polygonMode = false;
   polygonPoints = [];
   document.getElementById('polyBtn').classList.remove('active');
-  selectNode(polygon);
+
+  selectedNode = polygon;
+  showVertexHandles(polygon);
+  layer.draw();
+}
+
+function showVertexHandles(polygon) {
+  hideVertexHandles();
+
+  const points = polygon.points();
+  const offsetX = polygon.x();
+  const offsetY = polygon.y();
+
+  for (let i = 0; i < points.length; i += 2) {
+    const handle = new Konva.Circle({
+      x: points[i] + offsetX,
+      y: points[i + 1] + offsetY,
+      radius: 7,
+      fill: 'red',
+      stroke: 'white',
+      strokeWidth: 2,
+      draggable: true
+    });
+
+    handle.on('dragmove', () => {
+      const newPoints = polygon.points().slice();
+      newPoints[i] = handle.x() - polygon.x();
+      newPoints[i + 1] = handle.y() - polygon.y();
+      polygon.points(newPoints);
+      layer.draw();
+    });
+
+    vertexHandles.push(handle);
+    layer.add(handle);
+  }
+
+  layer.draw();
+}
+
+function hideVertexHandles() {
+  vertexHandles.forEach(h => h.destroy());
+  vertexHandles = [];
 }
 
 function addArrow() {
   const arrow = new Konva.Arrow({
     x: width / 2 - 80,
     y: height / 2,
-    points: [0, 0, 150, 0],
-    pointerLength: 18,
-    pointerWidth: 18,
+    points: [0, 0, 160, 0],
+    pointerLength: 20,
+    pointerWidth: 20,
     fill: 'green',
     stroke: 'green',
     strokeWidth: 8,
@@ -270,7 +341,6 @@ function addArrow() {
   });
 
   arrow.on('click tap', () => selectNode(arrow));
-
   layer.add(arrow);
   selectNode(arrow);
 }
@@ -284,8 +354,8 @@ function addTextBox() {
   });
 
   const rect = new Konva.Rect({
-    width: 170,
-    height: 55,
+    width: 180,
+    height: 60,
     fill: 'white',
     stroke: 'black',
     strokeWidth: 2,
@@ -296,7 +366,7 @@ function addTextBox() {
     text: value,
     fontSize: 15,
     fill: 'black',
-    width: 160,
+    width: 170,
     padding: 8
   });
 
@@ -312,6 +382,7 @@ function deleteSelected() {
     selectedNode.destroy();
     transformer.nodes([]);
     selectedNode = null;
+    hideVertexHandles();
     layer.draw();
   }
 }
@@ -324,11 +395,13 @@ function clearObjects() {
   });
   transformer.nodes([]);
   selectedNode = null;
+  vertexHandles = [];
   layer.draw();
 }
 
 function exportPNG() {
   transformer.nodes([]);
+  hideVertexHandles();
   layer.draw();
 
   const dataURL = stage.toDataURL({ pixelRatio: 2 });
