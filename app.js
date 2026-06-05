@@ -34,6 +34,8 @@ stage.on("wheel", e => {
   const oldScale = stage.scaleX();
   const pointer = stage.getPointerPosition();
 
+  if (!pointer) return;
+
   const mousePointTo = {
     x: (pointer.x - stage.x()) / oldScale,
     y: (pointer.y - stage.y()) / oldScale
@@ -161,14 +163,18 @@ function selectNode(node) {
   layer.draw();
 }
 
+function getCenterPoint() {
+  return getStagePointer() || {
+    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
+    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
+  };
+}
+
 function addArea(label, color, stroke, dashed = false) {
   counts[label] = (counts[label] || 0) + 1;
   updateLegend();
 
-  const center = getStagePointer() || {
-    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
-    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
-  };
+  const center = getCenterPoint();
 
   const rect = new Konva.Rect({
     x: center.x - 90,
@@ -193,10 +199,7 @@ function addEstintore() {
   counts["Estintore"] = (counts["Estintore"] || 0) + 1;
   updateLegend();
 
-  const center = getStagePointer() || {
-    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
-    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
-  };
+  const center = getCenterPoint();
 
   const g = new Konva.Group({
     x: center.x,
@@ -237,10 +240,7 @@ function addSoccorso() {
   counts["Punto primo soccorso"] = (counts["Punto primo soccorso"] || 0) + 1;
   updateLegend();
 
-  const center = getStagePointer() || {
-    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
-    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
-  };
+  const center = getCenterPoint();
 
   const g = new Konva.Group({
     x: center.x,
@@ -279,10 +279,7 @@ function addWC() {
   counts["WC"] = (counts["WC"] || 0) + 1;
   updateLegend();
 
-  const center = getStagePointer() || {
-    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
-    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
-  };
+  const center = getCenterPoint();
 
   const g = new Konva.Group({
     x: center.x,
@@ -321,10 +318,7 @@ function addAccesso() {
   counts["Accessi principali"] = (counts["Accessi principali"] || 0) + 1;
   updateLegend();
 
-  const center = getStagePointer() || {
-    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
-    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
-  };
+  const center = getCenterPoint();
 
   const arrow = new Konva.Arrow({
     x: center.x - 70,
@@ -350,10 +344,7 @@ function addViaFuga() {
   counts["Vie di fuga"] = (counts["Vie di fuga"] || 0) + 1;
   updateLegend();
 
-  const center = getStagePointer() || {
-    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
-    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
-  };
+  const center = getCenterPoint();
 
   const arrow = new Konva.Arrow({
     x: center.x - 80,
@@ -537,10 +528,7 @@ document.getElementById("textBtn").addEventListener("click", () => {
   const boxWidth = text.width();
   const boxHeight = text.height();
 
-  const center = getStagePointer() || {
-    x: (stage.width() / 2 - stage.x()) / stage.scaleX(),
-    y: (stage.height() / 2 - stage.y()) / stage.scaleY()
-  };
+  const center = getCenterPoint();
 
   const group = new Konva.Group({
     x: center.x - boxWidth / 2,
@@ -612,21 +600,17 @@ document.getElementById("pdfBtn").addEventListener("click", async () => {
   layer.draw();
 
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF("landscape", "mm", "a4");
+  const pdf = new jsPDF("portrait", "mm", "a4");
 
   pdf.setFillColor(255, 255, 255);
-  pdf.rect(0, 0, 297, 210, "F");
+  pdf.rect(0, 0, 210, 297, "F");
 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(18);
-  pdf.text("PLANIMETRIA DELL'EVENTO", 148.5, 14, { align: "center" });
+  pdf.text("PLANIMETRIA DELL'EVENTO", 105, 16, { align: "center" });
 
   pdf.setFontSize(13);
-  pdf.text(placeTitle.textContent, 148.5, 23, { align: "center" });
-
-  pdf.setDrawColor(30, 30, 30);
-  pdf.setLineWidth(0.4);
-  pdf.rect(10, 30, 205, 145);
+  pdf.text(placeTitle.textContent, 105, 25, { align: "center" });
 
   const oldX = stage.x();
   const oldY = stage.y();
@@ -637,47 +621,49 @@ document.getElementById("pdfBtn").addEventListener("click", async () => {
   stage.scale({ x: 1, y: 1 });
   stage.batchDraw();
 
-  const img = stage.toDataURL({ pixelRatio: 2 });
+  const img = stage.toDataURL({ pixelRatio: 3 });
 
   stage.position({ x: oldX, y: oldY });
   stage.scale({ x: oldScaleX, y: oldScaleY });
   stage.batchDraw();
 
-  pdf.addImage(img, "PNG", 11, 31, 203, 143);
+  pdf.setDrawColor(30, 30, 30);
+  pdf.setLineWidth(0.4);
 
-  pdf.rect(220, 30, 67, 105);
+  pdf.rect(10, 32, 190, 150);
+  pdf.addImage(img, "PNG", 11, 33, 188, 148);
 
+  pdf.rect(10, 188, 90, 55);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(12);
-  pdf.text("LEGENDA", 225, 39);
+  pdf.text("LEGENDA", 15, 198);
 
-  let y = 49;
+  let y = 208;
   pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(10);
+  pdf.setFontSize(9);
 
   Object.keys(counts).forEach(k => {
-    if (counts[k] > 0) {
-      pdf.text(`${k} x${counts[k]}`, 225, y);
-      y += 7;
+    if (counts[k] > 0 && y < 238) {
+      pdf.text(`${k} x${counts[k]}`, 15, y);
+      y += 6;
     }
   });
 
-  pdf.rect(220, 140, 67, 35);
-
+  pdf.rect(110, 188, 90, 55);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(12);
-  pdf.text("NOTE", 225, 149);
+  pdf.text("NOTE", 115, 198);
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(9);
 
   const note = document.getElementById("notes").value || "";
-  pdf.text(pdf.splitTextToSize(note, 58), 225, 158);
+  pdf.text(pdf.splitTextToSize(note, 80), 115, 208);
 
   pdf.setFontSize(8);
   pdf.setTextColor(100);
-  pdf.text("Documento allegato al dossier evento", 10, 190);
-  pdf.text("Scala non rilevata", 260, 190);
+  pdf.text("Documento allegato al dossier evento", 10, 285);
+  pdf.text("Scala non rilevata", 170, 285);
 
   pdf.save("planimetria_evento.pdf");
 });
