@@ -3,16 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <title>Civitella EventAI - Editor Planimetrie</title>
+
   <script src="https://unpkg.com/konva@9/konva.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <div id="app">
+
+  <!-- COLONNA SINISTRA -->
   <aside id="toolbar">
+
     <div class="logo-box">
-      <img src="logo_civitellaeventai.png">
+      <img src="logo_civitellaeventai.png" alt="Civitella EventAI">
       <h2>Civitella EventAI</h2>
       <span>Editor Planimetrie</span>
     </div>
@@ -30,48 +36,103 @@
     <label>Ortofoto personalizzata</label>
     <input type="file" id="upload" accept="image/*">
 
-    <h3>Elementi</h3>
-    <button data-tool="symbol" data-label="Gazebo" data-icon="⛺" data-color="#f4a261">⛺ Gazebo</button>
-    <button data-tool="symbol" data-label="Palco" data-icon="🎤" data-color="#457b9d">🎤 Palco</button>
-    <button data-tool="symbol" data-label="Tavoli" data-icon="▦" data-color="#6c757d">▦ Tavoli</button>
-    <button data-tool="symbol" data-label="Estintore" data-icon="🧯" data-color="#e63946">🧯 Estintore</button>
-    <button data-tool="symbol" data-label="Primo soccorso" data-icon="✚" data-color="#2a9d8f">✚ Primo soccorso</button>
-    <button data-tool="symbol" data-label="Accesso" data-icon="🚪" data-color="#1d3557">🚪 Accesso</button>
-    <button data-tool="symbol" data-label="Somministrazione" data-icon="🍔" data-color="#bc6c25">🍔 Somministrazione</button>
-    <button data-tool="symbol" data-label="WC" data-icon="🚻" data-color="#3a86ff">🚻 WC</button>
+    <h3>AREE</h3>
+    <button id="gazeboBtn">▭ Gazebo / Somministrazione</button>
+    <button id="tavoliBtn">▦ Tavoli / Area consumo</button>
+    <button id="pubblicoBtn">▭ Area pubblico</button>
 
-    <h3>Disegno</h3>
-    <button id="polyBtn">⬠ Perimetro manifestazione</button>
+    <h3>SICUREZZA</h3>
+    <button id="estintoreBtn">🧯 Estintore</button>
+    <button id="soccorsoBtn">✚ Punto primo soccorso</button>
+    <button id="accessoBtn">↔ Accessi principali</button>
+    <button id="arrowBtn">➜ Vie di fuga</button>
+
+    <h3>PERIMETRAZIONE</h3>
+    <button id="polyBtn">▭ Perimetro manifestazione</button>
     <button id="closePoly">Chiudi perimetro</button>
-    <button id="arrowBtn">➡ Via di fuga</button>
 
-    <h3>Testo</h3>
+    <h3>TESTO</h3>
     <input id="customText" placeholder="Testo personalizzato">
     <button id="textBtn">+ Casella testo</button>
 
-    <h3>Azioni</h3>
+    <h3>AZIONI</h3>
     <button id="deleteBtn">Elimina selezionato</button>
     <button id="clearBtn">Pulisci oggetti</button>
     <button id="pdfBtn" class="primary">Esporta PDF A4</button>
+
   </aside>
 
+  <!-- AREA CENTRALE -->
   <main id="map-area">
+
     <div id="map-header">
       <h1>PLANIMETRIA DELL'EVENTO</h1>
       <h2 id="placeTitle">PIAZZA GRAN SASSO</h2>
     </div>
+
     <div id="stage-wrap">
       <div id="stage-container"></div>
     </div>
+
   </main>
 
+  <!-- COLONNA DESTRA -->
   <aside id="legend-panel">
+
     <h2>Legenda</h2>
+
+    <div class="static-legend">
+
+      <div class="legend-row">
+        <span class="legend-symbol perimeter-symbol"></span>
+        <span>Perimetro della manifestazione</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-symbol escape-symbol">➜</span>
+        <span>Vie di fuga / uscite di emergenza</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-symbol access-symbol">↔</span>
+        <span>Accessi principali</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-symbol public-symbol"></span>
+        <span>Area pubblico</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-symbol gazebo-symbol"></span>
+        <span>Gazebo / Somministrazione</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-symbol tables-symbol"></span>
+        <span>Tavoli / Area consumo</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-symbol extinguisher-symbol">🧯</span>
+        <span>Estintore</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-symbol firstaid-symbol">✚</span>
+        <span>Punto di primo soccorso</span>
+      </div>
+
+    </div>
+
+    <h2>Elementi inseriti</h2>
     <div id="legendList"></div>
 
     <h2>Note</h2>
     <textarea id="notes" placeholder="Inserisci eventuali note..."></textarea>
+
   </aside>
+
 </div>
 
 <script src="app.js"></script>
