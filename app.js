@@ -40,8 +40,8 @@ function loadImage(src) {
   img.onload = () => {
     if (bg) bg.destroy();
 
-    const maxW = stage.width() * 0.92;
-    const maxH = stage.height() * 0.88;
+    const maxW = stage.width() * 0.98;
+    const maxH = stage.height() * 0.96;
     const scale = Math.min(maxW / img.width, maxH / img.height);
 
     bg = new Konva.Image({
@@ -67,56 +67,143 @@ function selectNode(node) {
   layer.draw();
 }
 
-function addSymbol(label, icon, color) {
+function addArea(label, color, stroke, dashed = false) {
   counts[label] = (counts[label] || 0) + 1;
   updateLegend();
 
-  const group = new Konva.Group({
-    x: stage.width() / 2 - 45,
-    y: stage.height() / 2 - 45,
+  const rect = new Konva.Rect({
+    x: stage.width() / 2 - 80,
+    y: stage.height() / 2 - 50,
+    width: 160,
+    height: 90,
+    fill: color,
+    stroke: stroke,
+    strokeWidth: 3,
+    dash: dashed ? [10, 6] : [],
     draggable: true,
     name: label
   });
 
-  const circle = new Konva.Circle({
-    x: 45,
-    y: 35,
-    radius: 30,
-    fill: "white",
-    stroke: color,
-    strokeWidth: 4
-  });
-
-  const symbol = new Konva.Text({
-    text: icon,
-    x: 0,
-    y: 13,
-    width: 90,
-    align: "center",
-    fontSize: 28
-  });
-
-  const text = new Konva.Text({
-    text: label,
-    x: -15,
-    y: 70,
-    width: 120,
-    align: "center",
-    fontSize: 12,
-    fill: "#111"
-  });
-
-  group.add(circle, symbol, text);
-  group.on("click tap", () => selectNode(group));
-  layer.add(group);
-  selectNode(group);
+  rect.on("click tap", () => selectNode(rect));
+  layer.add(rect);
+  selectNode(rect);
 }
 
-document.querySelectorAll("[data-tool='symbol']").forEach(btn => {
-  btn.addEventListener("click", () => {
-    addSymbol(btn.dataset.label, btn.dataset.icon, btn.dataset.color);
+function addEstintore() {
+  counts["Estintore"] = (counts["Estintore"] || 0) + 1;
+  updateLegend();
+
+  const g = new Konva.Group({
+    x: stage.width() / 2,
+    y: stage.height() / 2,
+    draggable: true,
+    name: "Estintore"
   });
-});
+
+  g.add(new Konva.Rect({
+    x: -13, y: -20, width: 26, height: 40,
+    fill: "#e63946", stroke: "#990000", strokeWidth: 2, cornerRadius: 4
+  }));
+
+  g.add(new Konva.Text({
+    text: "E",
+    x: -10, y: -12, width: 20,
+    align: "center", fill: "white",
+    fontSize: 22, fontStyle: "bold"
+  }));
+
+  g.on("click tap", () => selectNode(g));
+  layer.add(g);
+  selectNode(g);
+}
+
+function addSoccorso() {
+  counts["Punto primo soccorso"] = (counts["Punto primo soccorso"] || 0) + 1;
+  updateLegend();
+
+  const g = new Konva.Group({
+    x: stage.width() / 2,
+    y: stage.height() / 2,
+    draggable: true,
+    name: "Punto primo soccorso"
+  });
+
+  g.add(new Konva.Rect({
+    x: -22, y: -22, width: 44, height: 44,
+    fill: "#1f9d55", cornerRadius: 5
+  }));
+
+  g.add(new Konva.Text({
+    text: "+",
+    x: -20, y: -22, width: 40,
+    align: "center", fill: "white",
+    fontSize: 40, fontStyle: "bold"
+  }));
+
+  g.on("click tap", () => selectNode(g));
+  layer.add(g);
+  selectNode(g);
+}
+
+function addAccesso() {
+  counts["Accessi principali"] = (counts["Accessi principali"] || 0) + 1;
+  updateLegend();
+
+  const arrow = new Konva.Arrow({
+    x: stage.width() / 2 - 70,
+    y: stage.height() / 2,
+    points: [0, 0, 140, 0],
+    pointerLength: 16,
+    pointerWidth: 16,
+    stroke: "#224ecf",
+    fill: "#224ecf",
+    strokeWidth: 6,
+    pointerAtBeginning: true,
+    draggable: true,
+    name: "Accessi principali"
+  });
+
+  arrow.on("click tap", () => selectNode(arrow));
+  layer.add(arrow);
+  selectNode(arrow);
+}
+
+function addViaFuga() {
+  counts["Vie di fuga"] = (counts["Vie di fuga"] || 0) + 1;
+  updateLegend();
+
+  const arrow = new Konva.Arrow({
+    x: stage.width() / 2 - 80,
+    y: stage.height() / 2,
+    points: [0, 0, 170, 0],
+    pointerLength: 20,
+    pointerWidth: 20,
+    stroke: "#168a2d",
+    fill: "#168a2d",
+    strokeWidth: 7,
+    dash: [14, 8],
+    draggable: true,
+    name: "Vie di fuga"
+  });
+
+  arrow.on("click tap", () => selectNode(arrow));
+  layer.add(arrow);
+  selectNode(arrow);
+}
+
+document.getElementById("gazeboBtn").onclick = () =>
+  addArea("Gazebo / Somministrazione", "rgba(128,0,255,0.20)", "#7b2cbf");
+
+document.getElementById("tavoliBtn").onclick = () =>
+  addArea("Tavoli / Area consumo", "rgba(120,72,0,0.20)", "#7f5539", true);
+
+document.getElementById("pubblicoBtn").onclick = () =>
+  addArea("Area pubblico", "rgba(255,196,0,0.22)", "#f0a500", true);
+
+document.getElementById("estintoreBtn").onclick = addEstintore;
+document.getElementById("soccorsoBtn").onclick = addSoccorso;
+document.getElementById("accessoBtn").onclick = addAccesso;
+document.getElementById("arrowBtn").onclick = addViaFuga;
 
 luogoSelect.addEventListener("change", () => {
   const option = luogoSelect.options[luogoSelect.selectedIndex];
@@ -130,7 +217,6 @@ document.getElementById("upload").addEventListener("change", e => {
   if (!file) return;
 
   placeTitle.textContent = "ORTOFOTO PERSONALIZZATA";
-
   const reader = new FileReader();
   reader.onload = ev => loadImage(ev.target.result);
   reader.readAsDataURL(file);
@@ -183,14 +269,15 @@ document.getElementById("closePoly").addEventListener("click", () => {
     strokeWidth: 3,
     dash: [10, 6],
     draggable: true,
-    name: "Perimetro"
+    name: "Perimetro manifestazione"
   });
 
   poly.on("click tap", () => showVertices(poly));
   poly.on("dragmove", () => showVertices(poly));
 
   layer.add(poly);
-  counts["Perimetro"] = (counts["Perimetro"] || 0) + 1;
+
+  counts["Perimetro manifestazione"] = (counts["Perimetro manifestazione"] || 0) + 1;
   updateLegend();
 
   polygonMode = false;
@@ -234,28 +321,6 @@ function hideVertices() {
   vertexHandles.forEach(v => v.destroy());
   vertexHandles = [];
 }
-
-document.getElementById("arrowBtn").addEventListener("click", () => {
-  const arrow = new Konva.Arrow({
-    x: stage.width() / 2 - 80,
-    y: stage.height() / 2,
-    points: [0, 0, 180, 0],
-    pointerLength: 20,
-    pointerWidth: 20,
-    stroke: "green",
-    fill: "green",
-    strokeWidth: 8,
-    draggable: true,
-    name: "Via di fuga"
-  });
-
-  arrow.on("click tap", () => selectNode(arrow));
-  layer.add(arrow);
-  selectNode(arrow);
-
-  counts["Via di fuga"] = (counts["Via di fuga"] || 0) + 1;
-  updateLegend();
-});
 
 document.getElementById("textBtn").addEventListener("click", () => {
   const value = document.getElementById("customText").value || "Testo";
@@ -309,6 +374,7 @@ function clearObjects() {
   layer.children.forEach(child => {
     if (child !== bg && child !== tr) child.destroy();
   });
+
   counts = {};
   updateLegend();
   selected = null;
@@ -335,7 +401,6 @@ document.getElementById("pdfBtn").addEventListener("click", async () => {
   pdf.text(placeTitle.textContent, 148, 24, { align: "center" });
 
   const img = stage.toDataURL({ pixelRatio: 2 });
-
   pdf.addImage(img, "PNG", 10, 32, 205, 145);
 
   pdf.setFontSize(12);
@@ -353,6 +418,7 @@ document.getElementById("pdfBtn").addEventListener("click", async () => {
   pdf.setFont("helvetica", "bold");
   pdf.text("NOTE", 225, 125);
   pdf.setFont("helvetica", "normal");
+
   const note = document.getElementById("notes").value || "";
   pdf.text(pdf.splitTextToSize(note, 60), 225, 134);
 
