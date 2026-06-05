@@ -403,32 +403,39 @@ function hideVertices() {
 document.getElementById("textBtn").addEventListener("click", () => {
   const value = document.getElementById("customText").value || "Testo";
 
+  const text = new Konva.Text({
+    text: value,
+    fontSize: 16,
+    fontStyle: "bold",
+    fill: "#111",
+    padding: 10
+  });
+
+  const boxWidth = text.width();
+  const boxHeight = text.height();
+
   const group = new Konva.Group({
-    x: stage.width() / 2 - 100,
-    y: stage.height() / 2 - 35,
+    x: stage.width() / 2 - boxWidth / 2,
+    y: stage.height() / 2 - boxHeight / 2,
     draggable: true,
     name: "Testo",
     ...outline
   });
 
-  group.add(new Konva.Rect({
-    width: 210,
-    height: 70,
+  const rect = new Konva.Rect({
+    width: boxWidth,
+    height: boxHeight,
     fill: "white",
     stroke: "#111",
     strokeWidth: 2,
     cornerRadius: 6
-  }));
+  });
 
-  group.add(new Konva.Text({
-    text: value,
-    width: 200,
-    padding: 10,
-    fontSize: 15,
-    fill: "#111"
-  }));
+  group.add(rect);
+  group.add(text);
 
   group.on("click tap", () => selectNode(group));
+
   layer.add(group);
   selectNode(group);
 });
