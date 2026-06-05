@@ -6,25 +6,48 @@
 <script src="https://unpkg.com/konva@9/konva.min.js"></script>
 
 <style>
-body { margin:0; font-family:Arial, sans-serif; background:#f5f5f5; }
+body { margin:0; font-family:Arial, sans-serif; background:#eef0f2; }
 #toolbar {
-  width:285px; height:100vh; background:#fff; border-right:1px solid #ccc;
+  width:310px; height:100vh; background:#fff; border-right:1px solid #ccc;
   float:left; padding:14px; box-sizing:border-box; overflow:auto;
 }
-#container { margin-left:285px; background:#d9d9d9; height:100vh; }
+#container {
+  margin-left:310px; background:#cfd3d7; height:100vh;
+  display:flex; align-items:center; justify-content:center;
+}
+.logo { text-align:center; margin-bottom:15px; }
+.logo img { width:135px; max-width:90%; }
+.logo h2 { margin:6px 0 0; font-size:18px; }
+.logo div { font-size:12px; color:#666; }
+
 button, select, input {
   width:100%; padding:9px; margin-bottom:8px; box-sizing:border-box;
 }
 button { cursor:pointer; }
 .small { font-size:12px; color:#555; line-height:1.35; }
 .active { background:#ffe8e8; border:2px solid #d00; }
+.legend {
+  background:#f7f7f7; border:1px solid #ccc; padding:8px; font-size:12px;
+  margin-top:8px; margin-bottom:8px;
+}
+.legend-row { display:flex; align-items:center; margin-bottom:5px; }
+.legend-symbol {
+  width:26px; height:22px; border:2px solid #333; margin-right:8px;
+  display:flex; align-items:center; justify-content:center;
+  background:white; font-weight:bold; font-size:12px;
+}
 </style>
 </head>
 
 <body>
 
 <div id="toolbar">
-  <h3>Editor Planimetrie</h3>
+
+  <div class="logo">
+    <img src="logo_civitellaeventai.png" alt="Civitella EventAI">
+    <h2>Civitella EventAI</h2>
+    <div>Editor Planimetrie</div>
+  </div>
 
   <label>Luogo</label>
   <select id="luogo" onchange="changeBase()">
@@ -36,22 +59,24 @@ button { cursor:pointer; }
     <option value="LUO-006_PIAZZA_META_BASE.png">Piazza Meta</option>
   </select>
 
+  <label>Ortofoto personalizzata</label>
+  <input type="file" accept="image/*" onchange="loadCustomImage(event)">
+
   <hr>
 
-  <button onclick="addSymbol('GAZEBO','▣','#f4a261')">+ Gazebo</button>
-  <button onclick="addSymbol('PALCO','▭','#457b9d')">+ Palco</button>
-  <button onclick="addSymbol('TAVOLI','⊞','#6c757d')">+ Tavoli</button>
-  <button onclick="addSymbol('ESTINTORE','E','#e63946')">+ Estintore</button>
-  <button onclick="addSymbol('PRIMO SOCCORSO','✚','#2a9d8f')">+ Primo Soccorso</button>
-  <button onclick="addSymbol('ACCESSO','A','#1d3557')">+ Accesso</button>
-  <button onclick="addSymbol('SOMMINISTRAZIONE','S','#bc6c25')">+ Somministrazione</button>
+  <button onclick="addSymbol('Gazebo','▣','#f4a261')">+ Gazebo</button>
+  <button onclick="addSymbol('Palco','▭','#457b9d')">+ Palco</button>
+  <button onclick="addSymbol('Tavoli','⊞','#6c757d')">+ Tavoli</button>
+  <button onclick="addSymbol('Estintore','🧯','#e63946')">+ Estintore</button>
+  <button onclick="addSymbol('Primo soccorso','✚','#2a9d8f')">+ Primo Soccorso</button>
+  <button onclick="addSymbol('Accesso','A','#1d3557')">+ Accesso</button>
+  <button onclick="addSymbol('Somministrazione','S','#bc6c25')">+ Somministrazione</button>
   <button onclick="addSymbol('WC','WC','#3a86ff')">+ WC</button>
 
   <hr>
 
   <button id="polyBtn" onclick="startPolygon()">+ Perimetro manifestazione</button>
   <button onclick="finishPolygon()">Chiudi perimetro</button>
-
   <button onclick="addArrow()">+ Via di fuga</button>
 
   <input id="customText" placeholder="Testo personalizzato">
@@ -63,24 +88,37 @@ button { cursor:pointer; }
   <button onclick="clearObjects()">Pulisci oggetti</button>
   <button onclick="exportPNG()">Esporta PNG</button>
 
+  <div class="legend">
+    <b>Legenda</b>
+    <div class="legend-row"><div class="legend-symbol">▣</div> Gazebo</div>
+    <div class="legend-row"><div class="legend-symbol">▭</div> Palco</div>
+    <div class="legend-row"><div class="legend-symbol">⊞</div> Tavoli</div>
+    <div class="legend-row"><div class="legend-symbol">🧯</div> Estintore</div>
+    <div class="legend-row"><div class="legend-symbol">✚</div> Primo soccorso</div>
+    <div class="legend-row"><div class="legend-symbol">A</div> Accesso</div>
+    <div class="legend-row"><div class="legend-symbol">S</div> Somministrazione</div>
+    <div class="legend-row"><div class="legend-symbol">WC</div> Servizi igienici</div>
+    <div class="legend-row"><div class="legend-symbol" style="border-color:red;color:red;">---</div> Perimetro</div>
+    <div class="legend-row"><div class="legend-symbol" style="border-color:green;color:green;">→</div> Via di fuga</div>
+  </div>
+
   <p class="small">
-    <b>Perimetro:</b> clicca più punti sulla mappa, poi “Chiudi perimetro”.<br>
-    Dopo la chiusura puoi spostare i vertici rossi.<br><br>
-    <b>Oggetti:</b> clicca, trascina, ruota o ridimensiona.
+    Perimetro: clicca più punti sulla mappa, poi “Chiudi perimetro”.
+    Dopo la chiusura puoi spostare i vertici rossi.
   </p>
 </div>
 
 <div id="container"></div>
 
 <script>
-const sidebar = 285;
-const width = window.innerWidth - sidebar;
-const height = window.innerHeight;
+const sidebar = 310;
+const screenW = window.innerWidth - sidebar;
+const screenH = window.innerHeight;
 
 const stage = new Konva.Stage({
   container: 'container',
-  width: width,
-  height: height
+  width: screenW,
+  height: screenH
 });
 
 const layer = new Konva.Layer();
@@ -100,34 +138,32 @@ const transformer = new Konva.Transformer({
 });
 layer.add(transformer);
 
+function fitImage(img) {
+  const maxW = screenW * 0.96;
+  const maxH = screenH * 0.96;
+  const ratio = Math.min(maxW / img.width, maxH / img.height);
+
+  const drawW = img.width * ratio;
+  const drawH = img.height * ratio;
+  const x = (screenW - drawW) / 2;
+  const y = (screenH - drawH) / 2;
+
+  return { x, y, drawW, drawH };
+}
+
 function loadBase(src) {
   const img = new Image();
   img.onload = function() {
     if (backgroundImage) backgroundImage.destroy();
 
-    const imgRatio = img.width / img.height;
-    const canvasRatio = width / height;
-
-    let drawWidth, drawHeight, offsetX, offsetY;
-
-    if (imgRatio > canvasRatio) {
-      drawWidth = width;
-      drawHeight = width / imgRatio;
-      offsetX = 0;
-      offsetY = (height - drawHeight) / 2;
-    } else {
-      drawHeight = height;
-      drawWidth = height * imgRatio;
-      offsetX = (width - drawWidth) / 2;
-      offsetY = 0;
-    }
+    const fitted = fitImage(img);
 
     backgroundImage = new Konva.Image({
       image: img,
-      x: offsetX,
-      y: offsetY,
-      width: drawWidth,
-      height: drawHeight,
+      x: fitted.x,
+      y: fitted.y,
+      width: fitted.drawW,
+      height: fitted.drawH,
       listening: true
     });
 
@@ -138,7 +174,19 @@ function loadBase(src) {
   img.src = src;
 }
 
+function loadCustomImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    loadBase(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
 function changeBase() {
+  clearObjects();
   loadBase(document.getElementById('luogo').value);
 }
 
@@ -151,15 +199,15 @@ function selectNode(node) {
 
 function addSymbol(label, symbol, color) {
   const group = new Konva.Group({
-    x: width / 2 - 45,
-    y: height / 2 - 35,
+    x: screenW / 2 - 45,
+    y: screenH / 2 - 35,
     draggable: true
   });
 
   const circle = new Konva.Circle({
     x: 45,
-    y: 28,
-    radius: 26,
+    y: 30,
+    radius: 28,
     fill: 'white',
     stroke: color,
     strokeWidth: 4
@@ -167,22 +215,22 @@ function addSymbol(label, symbol, color) {
 
   const icon = new Konva.Text({
     text: symbol,
-    fontSize: 24,
+    fontSize: symbol.length > 2 ? 18 : 26,
     fontStyle: 'bold',
     fill: color,
     width: 90,
     align: 'center',
-    y: 15
+    y: 17
   });
 
   const text = new Konva.Text({
     text: label,
     fontSize: 10,
     fill: '#111',
-    width: 110,
+    width: 120,
     align: 'center',
-    x: -10,
-    y: 58
+    x: -15,
+    y: 62
   });
 
   group.add(circle, icon, text);
@@ -263,8 +311,7 @@ function finishPolygon() {
     strokeWidth: 3,
     dash: [10, 6],
     closed: true,
-    draggable: true,
-    name: 'polygon'
+    draggable: true
   });
 
   polygon.on('click tap', () => {
@@ -274,9 +321,7 @@ function finishPolygon() {
     layer.draw();
   });
 
-  polygon.on('dragmove', () => {
-    showVertexHandles(polygon);
-  });
+  polygon.on('dragmove', () => showVertexHandles(polygon));
 
   layer.add(polygon);
 
@@ -329,11 +374,11 @@ function hideVertexHandles() {
 
 function addArrow() {
   const arrow = new Konva.Arrow({
-    x: width / 2 - 80,
-    y: height / 2,
-    points: [0, 0, 160, 0],
-    pointerLength: 20,
-    pointerWidth: 20,
+    x: screenW / 2 - 80,
+    y: screenH / 2,
+    points: [0, 0, 170, 0],
+    pointerLength: 22,
+    pointerWidth: 22,
     fill: 'green',
     stroke: 'green',
     strokeWidth: 8,
@@ -348,14 +393,14 @@ function addArrow() {
 function addTextBox() {
   const value = document.getElementById('customText').value || 'Testo';
   const group = new Konva.Group({
-    x: width / 2 - 80,
-    y: height / 2 - 30,
+    x: screenW / 2 - 90,
+    y: screenH / 2 - 30,
     draggable: true
   });
 
   const rect = new Konva.Rect({
-    width: 180,
-    height: 60,
+    width: 190,
+    height: 65,
     fill: 'white',
     stroke: 'black',
     strokeWidth: 2,
@@ -366,7 +411,7 @@ function addTextBox() {
     text: value,
     fontSize: 15,
     fill: 'black',
-    width: 170,
+    width: 180,
     padding: 8
   });
 
@@ -395,7 +440,7 @@ function clearObjects() {
   });
   transformer.nodes([]);
   selectedNode = null;
-  vertexHandles = [];
+  hideVertexHandles();
   layer.draw();
 }
 
