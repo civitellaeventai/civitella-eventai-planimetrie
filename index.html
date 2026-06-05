@@ -14,7 +14,6 @@
 
 <div id="app">
 
-  <!-- COLONNA SINISTRA -->
   <aside id="toolbar">
 
     <div class="logo-box">
@@ -38,12 +37,14 @@
 
     <h3>AREE</h3>
     <button id="gazeboBtn">▭ Gazebo / Somministrazione</button>
+    <button id="palcoBtn">▭ Palco</button>
     <button id="tavoliBtn">▦ Tavoli / Area consumo</button>
     <button id="pubblicoBtn">▭ Area pubblico</button>
 
     <h3>SICUREZZA</h3>
     <button id="estintoreBtn">🧯 Estintore</button>
     <button id="soccorsoBtn">✚ Punto primo soccorso</button>
+    <button id="wcBtn">WC Servizi igienici</button>
     <button id="accessoBtn">↔ Accessi principali</button>
     <button id="arrowBtn">➜ Vie di fuga</button>
 
@@ -62,7 +63,6 @@
 
   </aside>
 
-  <!-- AREA CENTRALE -->
   <main id="map-area">
 
     <div id="map-header">
@@ -76,7 +76,6 @@
 
   </main>
 
-  <!-- COLONNA DESTRA -->
   <aside id="legend-panel">
 
     <h2>Legenda</h2>
@@ -109,6 +108,11 @@
       </div>
 
       <div class="legend-row">
+        <span class="legend-symbol palco-symbol"></span>
+        <span>Palco</span>
+      </div>
+
+      <div class="legend-row">
         <span class="legend-symbol tables-symbol"></span>
         <span>Tavoli / Area consumo</span>
       </div>
@@ -121,6 +125,11 @@
       <div class="legend-row">
         <span class="legend-symbol firstaid-symbol">✚</span>
         <span>Punto di primo soccorso</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-symbol wc-symbol">WC</span>
+        <span>Servizi igienici</span>
       </div>
 
     </div>
