@@ -1,181 +1,205 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
-<meta charset="utf-8">
-<title>Civitella EventAI Planner</title>
-
+<meta charset="UTF-8">
+<title>Civitella EventAI - Editor Planimetrie</title>
+<script src="https://unpkg.com/konva@9/konva.min.js"></script>
 <style>
-body{
-    margin:0;
-    font-family:Arial;
+body { margin:0; font-family: Arial, sans-serif; background:#f5f5f5; }
+#toolbar {
+  width:260px; height:100vh; background:#ffffff; border-right:1px solid #ccc;
+  float:left; padding:15px; box-sizing:border-box; overflow:auto;
 }
-
-#toolbar{
-    width:250px;
-    height:100vh;
-    background:#f3f3f3;
-    float:left;
-    padding:15px;
-    box-sizing:border-box;
+#container { margin-left:260px; background:#ddd; height:100vh; }
+button, select {
+  width:100%; padding:9px; margin-bottom:8px; cursor:pointer;
 }
-
-#canvas-container{
-    margin-left:250px;
-    padding:10px;
-}
-
-button{
-    width:100%;
-    margin-bottom:10px;
-    padding:10px;
-}
-
-canvas{
-    border:1px solid #ccc;
-}
+h3 { margin-top:0; }
+.small { font-size:12px; color:#555; }
 </style>
 </head>
 
 <body>
 
 <div id="toolbar">
+  <h3>Editor Planimetrie</h3>
 
-<h3>Planimetria</h3>
+  <label>Luogo</label>
+  <select id="luogo" onchange="changeBase()">
+    <option value="LUO-001_PIAZZA_GRAN_SASSO_BASE.png">Piazza Gran Sasso</option>
+    <option value="LUO-002_PIAZZA_SAN_GIOVANNI_BASE.png">Piazza San Giovanni</option>
+    <option value="LUO-002_PIAZZA_07_GIUGNO_BASE.png">Piazza 07 Giugno</option>
+    <option value="LUO-004_CAMPO_SPORTIVO_BASE.png">Campo Sportivo</option>
+    <option value="LUO-005_PIAZZA_PESCHIERA_BASE.png">Piazza Peschiera</option>
+    <option value="LUO-006_PIAZZA_CHIESA_SCUOLA_BASE.png">Piazza Chiesa/Scuola</option>
+  </select>
 
-<button onclick="addGazebo()">Gazebo</button>
-<button onclick="addPalco()">Palco</button>
-<button onclick="addEstintore()">Estintore</button>
-<button onclick="addAccesso()">Accesso</button>
-<button onclick="downloadImage()">Esporta PNG</button>
+  <hr>
 
+  <button onclick="addSymbol('GAZEBO','□','#f4a261')">+ Gazebo</button>
+  <button onclick="addSymbol('PALCO','▭','#457b9d')">+ Palco</button>
+  <button onclick="addSymbol('TAVOLI','⊞','#8d99ae')">+ Tavoli</button>
+  <button onclick="addSymbol('ESTINTORE','E','#e63946')">+ Estintore</button>
+  <button onclick="addSymbol('PRIMO SOCCORSO','+','#2a9d8f')">+ Primo Soccorso</button>
+  <button onclick="addSymbol('ACCESSO','A','#1d3557')">+ Accesso</button>
+  <button onclick="addSymbol('ESODO','→','#2b9348')">+ Via di Esodo</button>
+  <button onclick="addSymbol('PUBBLICO','P','#6a4c93')">+ Area Pubblico</button>
+  <button onclick="addSymbol('SOMMINISTRAZIONE','S','#bc6c25')">+ Somministrazione</button>
+  <button onclick="addSymbol('WC','WC','#3a86ff')">+ WC</button>
+
+  <hr>
+
+  <button onclick="deleteSelected()">Elimina selezionato</button>
+  <button onclick="clearObjects()">Pulisci oggetti</button>
+  <button onclick="exportPNG()">Esporta PNG</button>
+
+  <p class="small">
+    Clicca un simbolo per selezionarlo. Trascinalo sulla planimetria.
+    Usa i quadratini blu per ridimensionare/ruotare.
+  </p>
 </div>
 
-<div id="canvas-container">
-<canvas id="canvas" width="1200" height="800"></canvas>
-</div>
+<div id="container"></div>
 
 <script>
+const width = window.innerWidth - 260;
+const height = window.innerHeight;
 
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const stage = new Konva.Stage({
+  container: 'container',
+  width: width,
+  height: height
+});
 
-const background = new Image();
+const layer = new Konva.Layer();
+stage.add(layer);
 
-/*
-SOSTITUIRAI QUI L'URL DELLA FOTO DI PIAZZA GRAN SASSO
-*/
+let backgroundImage;
+let selectedNode = null;
 
-background.src = "";
+const transformer = new Konva.Transformer({
+  rotateEnabled: true,
+  enabledAnchors: ['top-left','top-right','bottom-left','bottom-right']
+});
+layer.add(transformer);
 
-background.onload = () => {
-    ctx.drawImage(background,0,0,1200,800);
-};
+function loadBase(src) {
+  const imageObj = new Image();
+  imageObj.onload = function() {
+    if (backgroundImage) backgroundImage.destroy();
 
-let objects=[];
+    backgroundImage = new Konva.Image({
+      image: imageObj,
+      x: 0,
+      y: 0,
+      width: width,
+      height: height,
+      listening: false
+    });
 
-function redraw(){
+    layer.add(backgroundImage);
+    backgroundImage.moveToBottom();
+    layer.draw();
+  };
+  imageObj.src = src;
+}
 
-    ctx.clearRect(0,0,1200,800);
+function changeBase() {
+  const src = document.getElementById('luogo').value;
+  loadBase(src);
+}
 
-    if(background.complete){
-        ctx.drawImage(background,0,0,1200,800);
+function addSymbol(label, symbol, color) {
+  const group = new Konva.Group({
+    x: width / 2 - 40,
+    y: height / 2 - 40,
+    draggable: true
+  });
+
+  const rect = new Konva.Rect({
+    width: 95,
+    height: 55,
+    fill: 'white',
+    stroke: color,
+    strokeWidth: 3,
+    cornerRadius: 4
+  });
+
+  const icon = new Konva.Text({
+    text: symbol,
+    fontSize: 26,
+    fontStyle: 'bold',
+    fill: color,
+    width: 95,
+    align: 'center',
+    y: 5
+  });
+
+  const text = new Konva.Text({
+    text: label,
+    fontSize: 11,
+    fill: '#111',
+    width: 95,
+    align: 'center',
+    y: 35
+  });
+
+  group.add(rect);
+  group.add(icon);
+  group.add(text);
+
+  group.on('click tap', function() {
+    selectedNode = group;
+    transformer.nodes([group]);
+    layer.draw();
+  });
+
+  layer.add(group);
+  selectedNode = group;
+  transformer.nodes([group]);
+  layer.draw();
+}
+
+stage.on('click tap', function(e) {
+  if (e.target === stage || e.target === backgroundImage) {
+    transformer.nodes([]);
+    selectedNode = null;
+    layer.draw();
+  }
+});
+
+function deleteSelected() {
+  if (selectedNode) {
+    selectedNode.destroy();
+    transformer.nodes([]);
+    selectedNode = null;
+    layer.draw();
+  }
+}
+
+function clearObjects() {
+  layer.children.forEach(child => {
+    if (child !== backgroundImage && child !== transformer) {
+      child.destroy();
     }
-
-    objects.forEach(obj=>{
-
-        ctx.fillStyle=obj.color;
-
-        ctx.fillRect(
-            obj.x,
-            obj.y,
-            obj.w,
-            obj.h
-        );
-
-        ctx.fillStyle="black";
-
-        ctx.fillText(
-            obj.label,
-            obj.x,
-            obj.y-5
-        );
-
-    });
-
+  });
+  transformer.nodes([]);
+  selectedNode = null;
+  layer.draw();
 }
 
-function addGazebo(){
+function exportPNG() {
+  transformer.nodes([]);
+  layer.draw();
 
-    objects.push({
-        x:100,
-        y:100,
-        w:40,
-        h:40,
-        color:"orange",
-        label:"Gazebo"
-    });
-
-    redraw();
-
+  const dataURL = stage.toDataURL({ pixelRatio: 2 });
+  const link = document.createElement('a');
+  link.download = 'planimetria_evento.png';
+  link.href = dataURL;
+  link.click();
 }
 
-function addPalco(){
-
-    objects.push({
-        x:150,
-        y:150,
-        w:60,
-        h:40,
-        color:"blue",
-        label:"Palco"
-    });
-
-    redraw();
-
-}
-
-function addEstintore(){
-
-    objects.push({
-        x:200,
-        y:200,
-        w:20,
-        h:20,
-        color:"red",
-        label:"Est."
-    });
-
-    redraw();
-
-}
-
-function addAccesso(){
-
-    objects.push({
-        x:250,
-        y:250,
-        w:30,
-        h:30,
-        color:"green",
-        label:"Accesso"
-    });
-
-    redraw();
-
-}
-
-function downloadImage(){
-
-    const link=document.createElement("a");
-
-    link.download="planimetria.png";
-
-    link.href=canvas.toDataURL();
-
-    link.click();
-
-}
-
+loadBase('LUO-001_PIAZZA_GRAN_SASSO_BASE.png');
 </script>
 
 </body>
