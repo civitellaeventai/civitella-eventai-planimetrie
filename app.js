@@ -21,6 +21,14 @@ layer.add(tr);
 const luogoSelect = document.getElementById("luogo");
 const placeTitle = document.getElementById("placeTitle");
 
+const outline = {
+  shadowColor: "white",
+  shadowBlur: 5,
+  shadowOffsetX: 0,
+  shadowOffsetY: 0,
+  shadowOpacity: 1
+};
+
 function updateLegend() {
   const box = document.getElementById("legendList");
   box.innerHTML = "";
@@ -81,7 +89,8 @@ function addArea(label, color, stroke, dashed = false) {
     strokeWidth: 3,
     dash: dashed ? [10, 6] : [],
     draggable: true,
-    name: label
+    name: label,
+    ...outline
   });
 
   rect.on("click tap", () => selectNode(rect));
@@ -97,7 +106,8 @@ function addEstintore() {
     x: stage.width() / 2,
     y: stage.height() / 2,
     draggable: true,
-    name: "Estintore"
+    name: "Estintore",
+    ...outline
   });
 
   g.add(new Konva.Rect({
@@ -135,7 +145,8 @@ function addSoccorso() {
     x: stage.width() / 2,
     y: stage.height() / 2,
     draggable: true,
-    name: "Punto primo soccorso"
+    name: "Punto primo soccorso",
+    ...outline
   });
 
   g.add(new Konva.Rect({
@@ -171,7 +182,8 @@ function addWC() {
     x: stage.width() / 2,
     y: stage.height() / 2,
     draggable: true,
-    name: "WC"
+    name: "WC",
+    ...outline
   });
 
   g.add(new Konva.Circle({
@@ -214,7 +226,8 @@ function addAccesso() {
     strokeWidth: 6,
     pointerAtBeginning: true,
     draggable: true,
-    name: "Accessi principali"
+    name: "Accessi principali",
+    ...outline
   });
 
   arrow.on("click tap", () => selectNode(arrow));
@@ -237,7 +250,8 @@ function addViaFuga() {
     strokeWidth: 7,
     dash: [14, 8],
     draggable: true,
-    name: "Vie di fuga"
+    name: "Vie di fuga",
+    ...outline
   });
 
   arrow.on("click tap", () => selectNode(arrow));
@@ -292,7 +306,8 @@ document.getElementById("polyBtn").addEventListener("click", () => {
     points: [],
     stroke: "red",
     strokeWidth: 3,
-    dash: [10, 6]
+    dash: [10, 6],
+    ...outline
   });
 
   layer.add(tempLine);
@@ -328,7 +343,8 @@ document.getElementById("closePoly").addEventListener("click", () => {
     strokeWidth: 3,
     dash: [10, 6],
     draggable: true,
-    name: "Perimetro manifestazione"
+    name: "Perimetro manifestazione",
+    ...outline
   });
 
   poly.on("click tap", () => showVertices(poly));
@@ -391,7 +407,8 @@ document.getElementById("textBtn").addEventListener("click", () => {
     x: stage.width() / 2 - 100,
     y: stage.height() / 2 - 35,
     draggable: true,
-    name: "Testo"
+    name: "Testo",
+    ...outline
   });
 
   group.add(new Konva.Rect({
@@ -464,7 +481,6 @@ document.getElementById("pdfBtn").addEventListener("click", async () => {
   pdf.text(placeTitle.textContent, 148, 24, { align: "center" });
 
   const img = stage.toDataURL({ pixelRatio: 2 });
-
   pdf.addImage(img, "PNG", 10, 32, 205, 145);
 
   pdf.setFontSize(12);
