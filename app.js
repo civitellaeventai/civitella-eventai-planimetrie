@@ -7,6 +7,46 @@ const stage = new Konva.Stage({
 const layer = new Konva.Layer();
 stage.add(layer);
 
+// ZOOM + PAN
+window.addEventListener("keydown", e => {
+  if (e.code === "Space") {
+    stage.draggable(true);
+    document.body.style.cursor = "grab";
+  }
+});
+
+window.addEventListener("keyup", e => {
+  if (e.code === "Space") {
+    stage.draggable(false);
+    document.body.style.cursor = "default";
+  }
+});
+
+stage.on("wheel", e => {
+  e.evt.preventDefault();
+
+  const scaleBy = 1.08;
+  const oldScale = stage.scaleX();
+  const pointer = stage.getPointerPosition();
+
+  const mousePointTo = {
+    x: (pointer.x - stage.x()) / oldScale,
+    y: (pointer.y - stage.y()) / oldScale
+  };
+
+  const direction = e.evt.deltaY > 0 ? -1 : 1;
+  const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+  stage.scale({ x: newScale, y: newScale });
+
+  stage.position({
+    x: pointer.x - mousePointTo.x * newScale,
+    y: pointer.y - mousePointTo.y * newScale
+  });
+
+  stage.batchDraw();
+});
+
 let bg = null;
 let selected = null;
 let counts = {};
@@ -480,35 +520,70 @@ document.getElementById("pdfBtn").addEventListener("click", async () => {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF("landscape", "mm", "a4");
 
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(0, 0, 297, 210, "F");
+
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(18);
-  pdf.text("PLANIMETRIA DELL'EVENTO", 148, 15, { align: "center" });
+  pdf.text("PLANIMETRIA DELL'EVENTO", 148.5, 14, { align: "center" });
 
   pdf.setFontSize(13);
-  pdf.text(placeTitle.textContent, 148, 24, { align: "center" });
+  pdf.text(placeTitle.textContent, 148.5, 23, { align: "center" });
+
+  pdf.setDrawColor(30, 30, 30);
+  pdf.setLineWidth(0.4);
+
+  pdf.rect(10, 30, 205, 145);
+
+  const oldX = stage.x();
+  const oldY = stage.y();
+  const oldScale = stage.scaleX();
+
+  stage.position({ x: 0, y: 0 });
+  stage.scale({ x: 1, y: 1 });
+  stage.batchDraw();
 
   const img = stage.toDataURL({ pixelRatio: 2 });
-  pdf.addImage(img, "PNG", 10, 32, 205, 145);
 
+  stage.position({ x: oldX, y: oldY });
+  stage.scale({ x: oldScale, y: oldScale });
+  stage.batchDraw();
+
+  pdf.addImage(img, "PNG", 11, 31, 203, 143);
+
+  pdf.rect(220, 30, 67, 105);
+
+  pdf.setFont("helvetica", "bold");
   pdf.setFontSize(12);
-  pdf.text("LEGENDA", 225, 36);
+  pdf.text("LEGENDA", 225, 39);
 
-  let y = 46;
+  let y = 49;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(10);
 
   Object.keys(counts).forEach(k => {
     if (counts[k] > 0) {
-      pdf.setFont("helvetica", "normal");
       pdf.text(`${k} x${counts[k]}`, 225, y);
-      y += 8;
+      y += 7;
     }
   });
 
+  pdf.rect(220, 140, 67, 35);
+
   pdf.setFont("helvetica", "bold");
-  pdf.text("NOTE", 225, 125);
+  pdf.setFontSize(12);
+  pdf.text("NOTE", 225, 149);
 
   pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+
   const note = document.getElementById("notes").value || "";
-  pdf.text(pdf.splitTextToSize(note, 60), 225, 134);
+  pdf.text(pdf.splitTextToSize(note, 58), 225, 158);
+
+  pdf.setFontSize(8);
+  pdf.setTextColor(100);
+  pdf.text("Documento allegato al dossier evento", 10, 190);
+  pdf.text("Scala non rilevata", 260, 190);
 
   pdf.save("planimetria_evento.pdf");
 });
