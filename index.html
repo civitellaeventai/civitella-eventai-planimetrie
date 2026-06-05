@@ -1,463 +1,79 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<title>Civitella EventAI - Editor Planimetrie</title>
-<script src="https://unpkg.com/konva@9/konva.min.js"></script>
-
-<style>
-body { margin:0; font-family:Arial, sans-serif; background:#eef0f2; }
-#toolbar {
-  width:310px; height:100vh; background:#fff; border-right:1px solid #ccc;
-  float:left; padding:14px; box-sizing:border-box; overflow:auto;
-}
-#container {
-  margin-left:310px; background:#cfd3d7; height:100vh;
-  display:flex; align-items:center; justify-content:center;
-}
-.logo { text-align:center; margin-bottom:15px; }
-.logo img { width:135px; max-width:90%; }
-.logo h2 { margin:6px 0 0; font-size:18px; }
-.logo div { font-size:12px; color:#666; }
-
-button, select, input {
-  width:100%; padding:9px; margin-bottom:8px; box-sizing:border-box;
-}
-button { cursor:pointer; }
-.small { font-size:12px; color:#555; line-height:1.35; }
-.active { background:#ffe8e8; border:2px solid #d00; }
-.legend {
-  background:#f7f7f7; border:1px solid #ccc; padding:8px; font-size:12px;
-  margin-top:8px; margin-bottom:8px;
-}
-.legend-row { display:flex; align-items:center; margin-bottom:5px; }
-.legend-symbol {
-  width:26px; height:22px; border:2px solid #333; margin-right:8px;
-  display:flex; align-items:center; justify-content:center;
-  background:white; font-weight:bold; font-size:12px;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Civitella EventAI - Editor Planimetrie</title>
+  <script src="https://unpkg.com/konva@9/konva.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div id="toolbar">
+<div id="app">
+  <aside id="toolbar">
+    <div class="logo-box">
+      <img src="logo_civitellaeventai.png">
+      <h2>Civitella EventAI</h2>
+      <span>Editor Planimetrie</span>
+    </div>
 
-  <div class="logo">
-    <img src="logo_civitellaeventai.png" alt="Civitella EventAI">
-    <h2>Civitella EventAI</h2>
-    <div>Editor Planimetrie</div>
-  </div>
+    <label>Luogo</label>
+    <select id="luogo">
+      <option value="LUO-001_PIAZZA_GRAN_SASSO_BASE.png" data-title="PIAZZA GRAN SASSO">Piazza Gran Sasso</option>
+      <option value="LUO-002_PIAZZA_SAN_GIOVANNI_BASE.png" data-title="PIAZZA SAN GIOVANNI">Piazza San Giovanni</option>
+      <option value="LUO-003_PIAZZA_07_GIUGNO_BASE.png" data-title="PIAZZA 07 GIUGNO">Piazza 07 Giugno</option>
+      <option value="LUO-004_CAMPO_SPORTIVO_BASE.png" data-title="CAMPO SPORTIVO">Campo Sportivo</option>
+      <option value="LUO-005_PIAZZA_PESCHIERA_BASE.png" data-title="PIAZZA PESCHIERA">Piazza Peschiera</option>
+      <option value="LUO-006_PIAZZA_CHIESA_SCUOLA_BASE.png" data-title="PIAZZA CHIESA / SCUOLA">Piazza Chiesa / Scuola</option>
+    </select>
 
-  <label>Luogo</label>
-  <select id="luogo" onchange="changeBase()">
-    <option value="LUO-001_PIAZZA_GRAN_SASSO_BASE.png">Piazza Gran Sasso</option>
-    <option value="LUO-002_PIAZZA_SAN_GIOVANNI_BASE.png">Piazza San Giovanni</option>
-    <option value="LUO-003_PIAZZA_07_GIUGNO_BASE.png">Piazza 07 Giugno</option>
-    <option value="LUO-004_CAMPO_SPORTIVO_BASE.png">Campo Sportivo</option>
-    <option value="LUO-005_PIAZZA_PESCHIERA_BASE.png">Piazza Peschiera</option>
-    <option value="LUO-006_PIAZZA_META_BASE.png">Piazza Meta</option>
-  </select>
+    <label>Ortofoto personalizzata</label>
+    <input type="file" id="upload" accept="image/*">
 
-  <label>Ortofoto personalizzata</label>
-  <input type="file" accept="image/*" onchange="loadCustomImage(event)">
+    <h3>Elementi</h3>
+    <button data-tool="symbol" data-label="Gazebo" data-icon="⛺" data-color="#f4a261">⛺ Gazebo</button>
+    <button data-tool="symbol" data-label="Palco" data-icon="🎤" data-color="#457b9d">🎤 Palco</button>
+    <button data-tool="symbol" data-label="Tavoli" data-icon="▦" data-color="#6c757d">▦ Tavoli</button>
+    <button data-tool="symbol" data-label="Estintore" data-icon="🧯" data-color="#e63946">🧯 Estintore</button>
+    <button data-tool="symbol" data-label="Primo soccorso" data-icon="✚" data-color="#2a9d8f">✚ Primo soccorso</button>
+    <button data-tool="symbol" data-label="Accesso" data-icon="🚪" data-color="#1d3557">🚪 Accesso</button>
+    <button data-tool="symbol" data-label="Somministrazione" data-icon="🍔" data-color="#bc6c25">🍔 Somministrazione</button>
+    <button data-tool="symbol" data-label="WC" data-icon="🚻" data-color="#3a86ff">🚻 WC</button>
 
-  <hr>
+    <h3>Disegno</h3>
+    <button id="polyBtn">⬠ Perimetro manifestazione</button>
+    <button id="closePoly">Chiudi perimetro</button>
+    <button id="arrowBtn">➡ Via di fuga</button>
 
-  <button onclick="addSymbol('Gazebo','▣','#f4a261')">+ Gazebo</button>
-  <button onclick="addSymbol('Palco','▭','#457b9d')">+ Palco</button>
-  <button onclick="addSymbol('Tavoli','⊞','#6c757d')">+ Tavoli</button>
-  <button onclick="addSymbol('Estintore','🧯','#e63946')">+ Estintore</button>
-  <button onclick="addSymbol('Primo soccorso','✚','#2a9d8f')">+ Primo Soccorso</button>
-  <button onclick="addSymbol('Accesso','A','#1d3557')">+ Accesso</button>
-  <button onclick="addSymbol('Somministrazione','S','#bc6c25')">+ Somministrazione</button>
-  <button onclick="addSymbol('WC','WC','#3a86ff')">+ WC</button>
+    <h3>Testo</h3>
+    <input id="customText" placeholder="Testo personalizzato">
+    <button id="textBtn">+ Casella testo</button>
 
-  <hr>
+    <h3>Azioni</h3>
+    <button id="deleteBtn">Elimina selezionato</button>
+    <button id="clearBtn">Pulisci oggetti</button>
+    <button id="pdfBtn" class="primary">Esporta PDF A4</button>
+  </aside>
 
-  <button id="polyBtn" onclick="startPolygon()">+ Perimetro manifestazione</button>
-  <button onclick="finishPolygon()">Chiudi perimetro</button>
-  <button onclick="addArrow()">+ Via di fuga</button>
+  <main id="map-area">
+    <div id="map-header">
+      <h1>PLANIMETRIA DELL'EVENTO</h1>
+      <h2 id="placeTitle">PIAZZA GRAN SASSO</h2>
+    </div>
+    <div id="stage-wrap">
+      <div id="stage-container"></div>
+    </div>
+  </main>
 
-  <input id="customText" placeholder="Testo personalizzato">
-  <button onclick="addTextBox()">+ Casella testo</button>
+  <aside id="legend-panel">
+    <h2>Legenda</h2>
+    <div id="legendList"></div>
 
-  <hr>
-
-  <button onclick="deleteSelected()">Elimina selezionato</button>
-  <button onclick="clearObjects()">Pulisci oggetti</button>
-  <button onclick="exportPNG()">Esporta PNG</button>
-
-  <div class="legend">
-    <b>Legenda</b>
-    <div class="legend-row"><div class="legend-symbol">▣</div> Gazebo</div>
-    <div class="legend-row"><div class="legend-symbol">▭</div> Palco</div>
-    <div class="legend-row"><div class="legend-symbol">⊞</div> Tavoli</div>
-    <div class="legend-row"><div class="legend-symbol">🧯</div> Estintore</div>
-    <div class="legend-row"><div class="legend-symbol">✚</div> Primo soccorso</div>
-    <div class="legend-row"><div class="legend-symbol">A</div> Accesso</div>
-    <div class="legend-row"><div class="legend-symbol">S</div> Somministrazione</div>
-    <div class="legend-row"><div class="legend-symbol">WC</div> Servizi igienici</div>
-    <div class="legend-row"><div class="legend-symbol" style="border-color:red;color:red;">---</div> Perimetro</div>
-    <div class="legend-row"><div class="legend-symbol" style="border-color:green;color:green;">→</div> Via di fuga</div>
-  </div>
-
-  <p class="small">
-    Perimetro: clicca più punti sulla mappa, poi “Chiudi perimetro”.
-    Dopo la chiusura puoi spostare i vertici rossi.
-  </p>
+    <h2>Note</h2>
+    <textarea id="notes" placeholder="Inserisci eventuali note..."></textarea>
+  </aside>
 </div>
 
-<div id="container"></div>
-
-<script>
-const sidebar = 310;
-const screenW = window.innerWidth - sidebar;
-const screenH = window.innerHeight;
-
-const stage = new Konva.Stage({
-  container: 'container',
-  width: screenW,
-  height: screenH
-});
-
-const layer = new Konva.Layer();
-stage.add(layer);
-
-let backgroundImage = null;
-let selectedNode = null;
-let polygonMode = false;
-let polygonPoints = [];
-let tempLine = null;
-let tempCircles = [];
-let vertexHandles = [];
-
-const transformer = new Konva.Transformer({
-  rotateEnabled: true,
-  enabledAnchors: ['top-left','top-right','bottom-left','bottom-right']
-});
-layer.add(transformer);
-
-function fitImage(img) {
-  const maxW = screenW * 0.96;
-  const maxH = screenH * 0.96;
-  const ratio = Math.min(maxW / img.width, maxH / img.height);
-
-  const drawW = img.width * ratio;
-  const drawH = img.height * ratio;
-  const x = (screenW - drawW) / 2;
-  const y = (screenH - drawH) / 2;
-
-  return { x, y, drawW, drawH };
-}
-
-function loadBase(src) {
-  const img = new Image();
-  img.onload = function() {
-    if (backgroundImage) backgroundImage.destroy();
-
-    const fitted = fitImage(img);
-
-    backgroundImage = new Konva.Image({
-      image: img,
-      x: fitted.x,
-      y: fitted.y,
-      width: fitted.drawW,
-      height: fitted.drawH,
-      listening: true
-    });
-
-    layer.add(backgroundImage);
-    backgroundImage.moveToBottom();
-    layer.draw();
-  };
-  img.src = src;
-}
-
-function loadCustomImage(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    loadBase(e.target.result);
-  };
-  reader.readAsDataURL(file);
-}
-
-function changeBase() {
-  clearObjects();
-  loadBase(document.getElementById('luogo').value);
-}
-
-function selectNode(node) {
-  selectedNode = node;
-  transformer.nodes([node]);
-  hideVertexHandles();
-  layer.draw();
-}
-
-function addSymbol(label, symbol, color) {
-  const group = new Konva.Group({
-    x: screenW / 2 - 45,
-    y: screenH / 2 - 35,
-    draggable: true
-  });
-
-  const circle = new Konva.Circle({
-    x: 45,
-    y: 30,
-    radius: 28,
-    fill: 'white',
-    stroke: color,
-    strokeWidth: 4
-  });
-
-  const icon = new Konva.Text({
-    text: symbol,
-    fontSize: symbol.length > 2 ? 18 : 26,
-    fontStyle: 'bold',
-    fill: color,
-    width: 90,
-    align: 'center',
-    y: 17
-  });
-
-  const text = new Konva.Text({
-    text: label,
-    fontSize: 10,
-    fill: '#111',
-    width: 120,
-    align: 'center',
-    x: -15,
-    y: 62
-  });
-
-  group.add(circle, icon, text);
-  group.on('click tap', () => selectNode(group));
-
-  layer.add(group);
-  selectNode(group);
-}
-
-function startPolygon() {
-  polygonMode = true;
-  polygonPoints = [];
-  tempCircles.forEach(c => c.destroy());
-  tempCircles = [];
-  hideVertexHandles();
-
-  if (tempLine) tempLine.destroy();
-
-  tempLine = new Konva.Line({
-    points: [],
-    stroke: 'red',
-    strokeWidth: 3,
-    dash: [10, 6],
-    closed: false
-  });
-
-  layer.add(tempLine);
-  document.getElementById('polyBtn').classList.add('active');
-  transformer.nodes([]);
-  selectedNode = null;
-  layer.draw();
-}
-
-stage.on('click tap', function(e) {
-  if (polygonMode) {
-    const pos = stage.getPointerPosition();
-    polygonPoints.push(pos.x, pos.y);
-
-    const circle = new Konva.Circle({
-      x: pos.x,
-      y: pos.y,
-      radius: 5,
-      fill: 'red',
-      stroke: 'white',
-      strokeWidth: 2
-    });
-
-    tempCircles.push(circle);
-    layer.add(circle);
-    tempLine.points(polygonPoints);
-    layer.draw();
-    return;
-  }
-
-  if (e.target === stage || e.target === backgroundImage) {
-    transformer.nodes([]);
-    selectedNode = null;
-    hideVertexHandles();
-    layer.draw();
-  }
-});
-
-function finishPolygon() {
-  if (!polygonMode || polygonPoints.length < 6) {
-    polygonMode = false;
-    document.getElementById('polyBtn').classList.remove('active');
-    return;
-  }
-
-  if (tempLine) tempLine.destroy();
-  tempCircles.forEach(c => c.destroy());
-  tempCircles = [];
-
-  const polygon = new Konva.Line({
-    points: polygonPoints,
-    fill: 'rgba(255,0,0,0.12)',
-    stroke: 'red',
-    strokeWidth: 3,
-    dash: [10, 6],
-    closed: true,
-    draggable: true
-  });
-
-  polygon.on('click tap', () => {
-    selectedNode = polygon;
-    transformer.nodes([]);
-    showVertexHandles(polygon);
-    layer.draw();
-  });
-
-  polygon.on('dragmove', () => showVertexHandles(polygon));
-
-  layer.add(polygon);
-
-  polygonMode = false;
-  polygonPoints = [];
-  document.getElementById('polyBtn').classList.remove('active');
-
-  selectedNode = polygon;
-  showVertexHandles(polygon);
-  layer.draw();
-}
-
-function showVertexHandles(polygon) {
-  hideVertexHandles();
-
-  const points = polygon.points();
-  const offsetX = polygon.x();
-  const offsetY = polygon.y();
-
-  for (let i = 0; i < points.length; i += 2) {
-    const handle = new Konva.Circle({
-      x: points[i] + offsetX,
-      y: points[i + 1] + offsetY,
-      radius: 7,
-      fill: 'red',
-      stroke: 'white',
-      strokeWidth: 2,
-      draggable: true
-    });
-
-    handle.on('dragmove', () => {
-      const newPoints = polygon.points().slice();
-      newPoints[i] = handle.x() - polygon.x();
-      newPoints[i + 1] = handle.y() - polygon.y();
-      polygon.points(newPoints);
-      layer.draw();
-    });
-
-    vertexHandles.push(handle);
-    layer.add(handle);
-  }
-
-  layer.draw();
-}
-
-function hideVertexHandles() {
-  vertexHandles.forEach(h => h.destroy());
-  vertexHandles = [];
-}
-
-function addArrow() {
-  const arrow = new Konva.Arrow({
-    x: screenW / 2 - 80,
-    y: screenH / 2,
-    points: [0, 0, 170, 0],
-    pointerLength: 22,
-    pointerWidth: 22,
-    fill: 'green',
-    stroke: 'green',
-    strokeWidth: 8,
-    draggable: true
-  });
-
-  arrow.on('click tap', () => selectNode(arrow));
-  layer.add(arrow);
-  selectNode(arrow);
-}
-
-function addTextBox() {
-  const value = document.getElementById('customText').value || 'Testo';
-  const group = new Konva.Group({
-    x: screenW / 2 - 90,
-    y: screenH / 2 - 30,
-    draggable: true
-  });
-
-  const rect = new Konva.Rect({
-    width: 190,
-    height: 65,
-    fill: 'white',
-    stroke: 'black',
-    strokeWidth: 2,
-    cornerRadius: 4
-  });
-
-  const text = new Konva.Text({
-    text: value,
-    fontSize: 15,
-    fill: 'black',
-    width: 180,
-    padding: 8
-  });
-
-  group.add(rect, text);
-  group.on('click tap', () => selectNode(group));
-
-  layer.add(group);
-  selectNode(group);
-}
-
-function deleteSelected() {
-  if (selectedNode) {
-    selectedNode.destroy();
-    transformer.nodes([]);
-    selectedNode = null;
-    hideVertexHandles();
-    layer.draw();
-  }
-}
-
-function clearObjects() {
-  layer.children.forEach(child => {
-    if (child !== backgroundImage && child !== transformer) {
-      child.destroy();
-    }
-  });
-  transformer.nodes([]);
-  selectedNode = null;
-  hideVertexHandles();
-  layer.draw();
-}
-
-function exportPNG() {
-  transformer.nodes([]);
-  hideVertexHandles();
-  layer.draw();
-
-  const dataURL = stage.toDataURL({ pixelRatio: 2 });
-  const link = document.createElement('a');
-  link.download = 'planimetria_evento.png';
-  link.href = dataURL;
-  link.click();
-}
-
-loadBase('LUO-001_PIAZZA_GRAN_SASSO_BASE.png');
-</script>
-
+<script src="app.js"></script>
 </body>
 </html>
